@@ -17,7 +17,7 @@ more XX021115_bs_cp/SampleSheet.csv  # it *IS* the right run
 
 # try a third party solution: BaseSpaceRunDownloader
 wget https://gist.githubusercontent.com/rlesca01/7ce2ca0c35c7ff97a215/raw/0eeaa8cc1b3eff00babf398a82a31f4b0946f5bb/BaseSpaceRunDownloader_v2a.py
-AccessToken = 16fce877599b4bb69f43bb8a8dXXXX # get this from your config ~/.basespace/*cfg 
+AccessToken = 16fce877599b4bb69f43bb8a8dXXXX # get this from your config ~/.basespace/*cfg or thru website
 # supposed to be able to run this with project name, not run id 
 python BaseSpaceRunDownloader_v2a.py -r XX021115 -a  $AccessToken
 # NameError: name 'ProjectDir' is not defined
