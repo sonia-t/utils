@@ -23,25 +23,30 @@ def __old():
         dfs[samp_id] = pd.read_table(infile, sep=',')
         dfs[samp_id].set_index( list(dfs[samp_id].columns[:-2]) , inplace=True)
         dfs[samp_id].drop( "%_hits", axis=1, inplace=True)
-
-
     all = pd.concat(dfs, axis=1)
+    return all
 
 def test_read_three_samples(AppResults_dir, samp_ids=['UC-23 B','UC-23 A','UC-22 C']):
     ''' find and read csvs from basespace AppResults_dir dir '''
     dfs = {}
     for samp_id in samp_ids:
         sample_path = '{}/{} (2)/Files/'.format(AppResults_dir,samp_id)
-        file_names = [fn for fn in os.listdir(sample_path)
-                      if  (fn.startswith(samp_id.replace(' ','-'))
-                      and fn.endswith('csv')) ]
-        print(file_names)
-        assert(len(file_names)==1)
-        dfs[samp_id] = pd.read_table(sample_path + file_names[0], sep=',')
-        dfs[samp_id].set_index( list(dfs[samp_id].columns[:-2]) , inplace=True)
-        dfs[samp_id].drop( "%_hits", axis=1, inplace=True)
-
-    all = pd.concat(dfs, axis=1)
+        try:
+            file_paths = [sample_path + fn for fn in os.listdir(sample_path)
+                          if (fn.startswith(samp_id.replace(' ','-'))
+                              and fn.endswith('csv')) ]
+        except:
+            print('WARNING: {} csv not found in {}'.format(samp_id ,sample_path ), file=sys.stderr)
+            continue
+        else:
+            print('reading csv {} ...'.format(file_paths[0]), file=sys.stderr)        
+            dfs[samp_id] = pd.read_table(file_paths[0], sep=',')
+            dfs[samp_id].set_index( list(dfs[samp_id].columns[:-2]) , inplace=True)
+            dfs[samp_id].drop( "%_hits", axis=1, inplace=True)
+    try:
+        all = pd.concat(dfs, axis=1)
+    except:
+        all = pd.DataFrame()
     return all
 
 def parse_args(argv):
@@ -50,18 +55,27 @@ def parse_args(argv):
                                      get sample info from Sample Sheet,
                                      join csvs from basespace App dir 
                                      ''')
-    parser.add_argument('--AppResults_dir', required=True,
+    parser.add_argument('--infile', required=True,
+                        type=argparse.FileType('r'), default=sys.stdin)
+    parser.add_argument('--outfile', required=True,
+                        type=argparse.FileType('w'), default=sys.stdout)
+    parser.add_argument('--AppResults_dir', default='./',
                         type=str )
     parser.add_argument('--SampleSheet', required=True,
                         type=str)
+    parser.add_argument('--test', action='store_true')
     return parser.parse_args(argv)
 
 def main(argv):
     #if not argv: 0
     opts = parse_args(argv[1:])
-    df = parse_SampleSheet(opts.SampleSheet)
-    all = test_read_three_samples(opts.AppResults_dir)
-    all.to_csv('three_samp.csv')
+    if opts.test:
+        all = test_read_three_samples(opts.AppResults_dir)
+        all.to_csv(opts.outfile)
+        return
+    samp_sheet_df = parse_SampleSheet(opts.SampleSheet)
+    all = test_read_three_samples(opts.AppResults_dir, samp_ids = list(samp_sheet_df.Sample_ID))
+    all.to_csv(opts.outfile)
     return all
 
 if __name__ == '__main__':
