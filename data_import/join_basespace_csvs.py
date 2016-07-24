@@ -20,6 +20,7 @@ def parse_SampleSheet(SampleSheet_file):
     assert(len(start_line)==1)
     table = [line.strip().split(',') for line in lines[1+start_line[0]:]]
     df = pd.DataFrame( data=table[1:], columns = table[0])
+    df.Sample_ID = df.Sample_ID.apply(lambda x: x.strip())
     return df 
             
 
@@ -34,23 +35,23 @@ def __old():
     all = pd.concat(dfs, axis=1)
     return all
 
-def join_sample_csvs(AppResults_dir, samp_ids=['UC-23 B','UC-23 A','UC-22 C']):
+def join_sample_csvs(AppResults_dir,
+                     samp_ids=['08-120','UC-23 B','UC-23 A','UC-22 C'], 
+                     samp_id_suffix=' (2)' ):
     ''' find and read csvs from basespace AppResults_dir dir '''
     dfs = {}
     for samp_id in samp_ids:
-        sample_path = '{}/{} (2)/Files/'.format(AppResults_dir,samp_id)
+        sample_path = '{}/{}{}/Files/'.format(AppResults_dir, samp_id, samp_id_suffix)
         try:
-            file_paths = [sample_path + fn for fn in os.listdir(sample_path)
-                          if (fn.startswith(samp_id.replace(' ','-'))
-                              and fn.endswith('csv')) ]
-        except:
-            print('WARNING: no csv not found in {}'.format(samp_id ,sample_path ), file=sys.stderr)
-            continue
-        else:
-            print('reading csv {} ...'.format(file_paths[0]), file=sys.stderr)        
-            dfs[samp_id] = pd.read_table(file_paths[0], sep=',')
+            file_path = [sample_path + fn for fn in os.listdir(sample_path)
+                          if fn.endswith('csv') ][0]
+            # (fn.startswith(samp_id.replace(' ','-'))
+            print('reading csv {} ...'.format(file_path), file=sys.stderr)        
+            dfs[samp_id] = pd.read_table(file_path, sep=',')
             dfs[samp_id].set_index( list(dfs[samp_id].columns[:-2]) , inplace=True)
             dfs[samp_id].drop( "%_hits", axis=1, inplace=True)
+        except:
+            print('WARNING: no csv for samp_id {} found in {}'.format(samp_id ,sample_path ), file=sys.stderr)
     try:
         all = pd.concat(dfs, axis=1)
         all.columns = all.columns.get_level_values(0)
@@ -73,17 +74,19 @@ def parse_args(argv):
     parser.add_argument('--SampleSheet', required=True,
                         type=str)
     parser.add_argument('--test', action='store_true')
+    parser.add_argument('--samp_id_suffix', default=' (2)' )
     return parser.parse_args(argv)
 
 def main(argv):
     #if not argv: 0
     opts = parse_args(argv[1:])
-    if opts.test:
-        all = join_sample_csvs(opts.AppResults_dir)
-        all.to_csv(opts.outfile)
-        return
     samp_sheet_df = parse_SampleSheet(opts.SampleSheet)
-    all = join_sample_csvs(opts.AppResults_dir, samp_ids = list(samp_sheet_df.Sample_ID)[:3])
+    samp_ids = list(samp_sheet_df.Sample_ID)
+
+    if opts.test:
+        all = join_sample_csvs(opts.AppResults_dir, samp_id_suffix=opts.samp_id_suffix)
+    else:
+        all = join_sample_csvs(opts.AppResults_dir, samp_ids=samp_ids, samp_id_suffix=opts.samp_id_suffix)
     all.to_csv(opts.outfile)
     return all
 
