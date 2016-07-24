@@ -1,9 +1,17 @@
+'''
+roots around in Illumina App dirs for csv results and joins various samples (provided by SampleSheet) into table
+
+Example invocation
+%run -d join_basespace_csvs.py  --infile  ~/dummy  --outfile  test10.csv  --AppResults_dir  '/shared/soniat/misc/basespace_FT/mount/Projects/MiSeq M02127 2016 Run206/AppResults'  --SampleSheet  /shared/soniat/misc/basespace_FT/SampleSheet.csv
+'''
 __author__ = "Sonia Timberlake"
 
 import pandas as pd
 import os 
 import sys
 import argparse 
+
+
 
 def parse_SampleSheet(SampleSheet_file):
     ''' rudimentary Miseq SampleSheet.csv --> df parser ''' 
@@ -26,7 +34,7 @@ def __old():
     all = pd.concat(dfs, axis=1)
     return all
 
-def test_read_three_samples(AppResults_dir, samp_ids=['UC-23 B','UC-23 A','UC-22 C']):
+def join_sample_csvs(AppResults_dir, samp_ids=['UC-23 B','UC-23 A','UC-22 C']):
     ''' find and read csvs from basespace AppResults_dir dir '''
     dfs = {}
     for samp_id in samp_ids:
@@ -36,7 +44,7 @@ def test_read_three_samples(AppResults_dir, samp_ids=['UC-23 B','UC-23 A','UC-22
                           if (fn.startswith(samp_id.replace(' ','-'))
                               and fn.endswith('csv')) ]
         except:
-            print('WARNING: {} csv not found in {}'.format(samp_id ,sample_path ), file=sys.stderr)
+            print('WARNING: no csv not found in {}'.format(samp_id ,sample_path ), file=sys.stderr)
             continue
         else:
             print('reading csv {} ...'.format(file_paths[0]), file=sys.stderr)        
@@ -45,6 +53,7 @@ def test_read_three_samples(AppResults_dir, samp_ids=['UC-23 B','UC-23 A','UC-22
             dfs[samp_id].drop( "%_hits", axis=1, inplace=True)
     try:
         all = pd.concat(dfs, axis=1)
+        all.columns = all.columns.get_level_values(0)
     except:
         all = pd.DataFrame()
     return all
@@ -70,11 +79,11 @@ def main(argv):
     #if not argv: 0
     opts = parse_args(argv[1:])
     if opts.test:
-        all = test_read_three_samples(opts.AppResults_dir)
+        all = join_sample_csvs(opts.AppResults_dir)
         all.to_csv(opts.outfile)
         return
     samp_sheet_df = parse_SampleSheet(opts.SampleSheet)
-    all = test_read_three_samples(opts.AppResults_dir, samp_ids = list(samp_sheet_df.Sample_ID))
+    all = join_sample_csvs(opts.AppResults_dir, samp_ids = list(samp_sheet_df.Sample_ID)[:3])
     all.to_csv(opts.outfile)
     return all
 
