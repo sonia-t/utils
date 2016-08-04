@@ -30,7 +30,8 @@ find 150213XX-202952xx/ -name  \*csv # nada
 
 # BEST OPTION for flexibility: bs mount 
 bs mount /shared/soniat/basespace_/
-find  /shared/soniat/basespace_/Runs/150213XX/ -name \*fastq\*  # I can see them, should be easy to transfer. 
+# get just the fastq 
+cd Runs/150213XX/ && rsync -avv -R ./Samples/ ./ --include="*fastq.gz" --include="*/" --exclude="*"
 # confirm its the same run I tried and failed to download fastq from before 
 diff /shared/soniat/basespace_/Runs/150213XX/Files/SampleSheet.csv XX021115_bs_cp/SampleSheet.csv
 # now just cp or rsync the files from the mount to local 
