@@ -11,7 +11,8 @@ import os
 import sys
 import argparse 
 
-from MiSeq_utils.basespace_csvs import parse_SampleSheet, join_sample_csvs
+from MiSeq_utils.basespace_csvs import parse_SampleSheet, join_sample_csvs # no __init__
+# from MiSeq_utils import parse_SampleSheet, join_sample_csvs
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(usage=__doc__,
