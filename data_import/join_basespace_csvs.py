@@ -2,7 +2,7 @@
 roots around in Illumina App dirs for csv results and joins various samples (provided by SampleSheet) into table
 
 Example invocation
-%run -d join_basespace_csvs.py  --infile  ~/dummy  --outfile  test10.csv  --AppResults_dir  '/shared/soniat/misc/basespace_FT/mount/Projects/MiSeq M02127 2016 Run206/AppResults'  --SampleSheet  /shared/soniat/misc/basespace_FT/SampleSheet.csv
+python3 join_basespace_csvs.py  --infile  ~/dummy  --outfile  test10.csv  --AppResults_dir  '/shared/soniat/misc/basespace_FT/mount/Projects/MiSeq M02127 2016 Run206/AppResults'  --SampleSheet  /shared/soniat/misc/basespace_FT/SampleSheet.csv
 '''
 __author__ = "Sonia Timberlake"
 
