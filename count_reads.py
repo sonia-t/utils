@@ -103,7 +103,7 @@ def main(argv=sys.argv):
 
     prefix, suffix = basename(opts.infile.name).split('.', 1)
 
-    if opts.file_format=='tab':
+    if opts.file_format=='tab' or suffix not in ('fastq','fasta','fa','fq','fst'):
         count, count_unit =count_tab(opts.infile, opts.count_unit, derep_field='size')
     else:
         count, count_unit = count_fastq(opts.infile, opts.count_unit)
