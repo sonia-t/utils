@@ -1,5 +1,5 @@
 '''
-fastq utils 
+count reads or records in usearch-formateted fastq and tab files 
 '''
 __author__ = "Sonia Timberlake"
 
@@ -8,8 +8,12 @@ import sys
 import argparse
 from os.path import basename, dirname, join
 from Bio import SeqIO
+from collections import OrderedDict
 
-default_delimiter={'fields':' ','key-value':'='}
+# Globals ? 
+default_delimiter={'fields': ';','key-value':'='}
+
+# Functions 
 def parseAnnotation(record, fields=None, delimiter=default_delimiter):
     """
     Extracts annotations from a FASTA/FASTQ sequence description
@@ -37,7 +41,7 @@ def parseAnnotation(record, fields=None, delimiter=default_delimiter):
     return field_dict
 
 def parse_usearch_header(header, 
-                         delims={'fields':' ','key-value':'='}):
+                         delims={'fields':';','key-value':'='}):
     '''
     Extracts annotations from a FASTA/FASTQ sequence description
     Default delimiters are the usearch/qiime format
@@ -45,9 +49,21 @@ def parse_usearch_header(header,
     fields = header.split(delims['fields'])
     field_dict = OrderedDict([('ID', fields.pop(0))])
     for field in fields:
-        pairs = field.split(delims['key-value'])
-        field_dict[pairs[0].lower()] = pairs[1]
+        pair = field.split(delims['key-value'])
+        if len(pair)>1[g: # in ase not every field is a key-value pair 
+            field_dict[pair[0].lower()] = pair[1]
+        else:
+            field_dict[pair[0].lower()] = pair[0]
     return field_dict
+
+def count_tab(infile, count_unit='reads', derep_field=None):
+    ''' when wc -l won't do because the reads are dereplicated '''
+    if count_unit == 'reads' and derep_field:
+        count = sum( int(parse_usearch_header(line)[derep_field]) for line in infile)
+    else:
+        count = sum( 1 for line in infile)
+    # TODO add in ID dereplication ? 
+    return count
 
 def count_fastq(infile, count_unit='reads'):
     prefix, suffix = basename(infile.name).split('.', 1)
@@ -55,9 +71,9 @@ def count_fastq(infile, count_unit='reads'):
     if not suffix in ('fastq','fasta'):
         raise Exception("Encountered file {} in rule counts which doesn't end "
                         "with fastq, fasta, fa, fq.".format(infile.name))
-    if 'derep' in prefix and units=='reads': # have to use the size field # TODO: maybe should look for it by default ? 
-        header_field = 'size'
-        count = sum( int(parse_usearch_header(record.description)[header_field])
+    if 'derep' in prefix and count_unit=='reads': # have to use the size field # TODO: maybe should look for it by default ? 
+        derep_field = 'size'
+        count = sum( int(parse_usearch_header(record.description)[derep_field])
                                  for record in SeqIO.parse(infile, suffix))
     else:
         count = sum(1 for record in SeqIO.parse(infile, suffix))
@@ -72,8 +88,11 @@ def parse_args(argv):
                         type=argparse.FileType('r'), default=sys.stdin)
     parser.add_argument('--outfile', 
                         type=argparse.FileType('w'), default=sys.stdout)
+    
     parser.add_argument('--count_unit', choices=["reads","records"],
                         default='reads' , help='in dereplicated fasta, reads!=records')
+    parser.add_argument('--file_format', choices=["tab","fasta","fastq"],
+                        default='fasta' , help='tab or fast[aq]')
     parser.add_argument('--test', action='store_true')
     return parser.parse_args(argv)
 
@@ -81,7 +100,13 @@ def parse_args(argv):
 
 def main(argv=sys.argv):
     opts = parse_args(argv[1:])
-    count = count_fastq(opts.infile, opts.count_unit)
+
+    prefix, suffix = basename(opts.infile.name).split('.', 1)
+
+    if opts.file_format=='tab':
+        count=count_tab(opts.infile, opts.count_unit, derep_field='size')
+    else:
+        count = count_fastq(opts.infile, opts.count_unit)
     print("{}\t{}\t{}".format(count,opts.count_unit,opts.infile.name), file=opts.outfile)
     return (count, opts.infile.name)
 
