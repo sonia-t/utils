@@ -1,5 +1,5 @@
 '''
-count reads or records in usearch-formateted fastq and tab files 
+count reads or records in usearch-formatted fastq and tab files 
 '''
 __author__ = "Sonia Timberlake"
 
@@ -50,7 +50,7 @@ def parse_usearch_header(header,
     field_dict = OrderedDict([('ID', fields.pop(0))])
     for field in fields:
         pair = field.split(delims['key-value'])
-        if len(pair)>1[g: # in ase not every field is a key-value pair 
+        if len(pair)>1: # in ase not every field is a key-value pair 
             field_dict[pair[0].lower()] = pair[1]
         else:
             field_dict[pair[0].lower()] = pair[0]
@@ -63,7 +63,7 @@ def count_tab(infile, count_unit='reads', derep_field=None):
     else:
         count = sum( 1 for line in infile)
     # TODO add in ID dereplication ? 
-    return count
+    return count, count_unit
 
 def count_fastq(infile, count_unit='reads'):
     prefix, suffix = basename(infile.name).split('.', 1)
@@ -77,7 +77,7 @@ def count_fastq(infile, count_unit='reads'):
                                  for record in SeqIO.parse(infile, suffix))
     else:
         count = sum(1 for record in SeqIO.parse(infile, suffix))
-    return count
+    return count, count_unit
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(usage=__doc__,
@@ -104,10 +104,10 @@ def main(argv=sys.argv):
     prefix, suffix = basename(opts.infile.name).split('.', 1)
 
     if opts.file_format=='tab':
-        count=count_tab(opts.infile, opts.count_unit, derep_field='size')
+        count, count_unit =count_tab(opts.infile, opts.count_unit, derep_field='size')
     else:
-        count = count_fastq(opts.infile, opts.count_unit)
-    print("{}\t{}\t{}".format(count,opts.count_unit,opts.infile.name), file=opts.outfile)
+        count, count_unit = count_fastq(opts.infile, opts.count_unit)
+    print("{}\t{}\t{}".format(count, count_unit, opts.infile.name), file=opts.outfile)
     return (count, opts.infile.name)
 
 if __name__ == '__main__':
