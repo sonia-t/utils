@@ -79,12 +79,11 @@ def parse_args(argv):
 
 
 
-def main(argv):
-    #if not argv: 0
+def main(argv=sys.argv):
     opts = parse_args(argv[1:])
     count = count_fastq(opts.infile, opts.count_unit)
     print("{}\t{}\t{}".format(count,opts.count_unit,opts.infile.name), file=opts.outfile)
     return (count, opts.infile.name)
 
 if __name__ == '__main__':
-    main(sys.argv)
+    main()
