@@ -17,12 +17,15 @@ from Bio.SeqRecord import SeqRecord
 
 def select_records_by_substring(inh, suffix, substring_list, outh):
     ''' probably reinventing the wheel :( '''
-    count = 0
+    count_matches_found =0
+    all_strings_matched = set()
     for record in SeqIO.parse(inh, suffix):
-        if any(x in record.description for x in substring_list):
+        strings_matched = [x for x in substring_list if x in record.description]
+        if any(strings_matched):
             SeqIO.write(record, outh, suffix)
-            count += 1
-    return count
+            count_matches_found += 1
+            all_strings_matched |=  set(strings_matched)
+    return (count_matches_found, all_strings_matched)
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(usage=__doc__,
@@ -46,22 +49,26 @@ def parse_args(argv):
 def main(argv=sys.argv):
     opts = parse_args(argv[1:])
 
-    prefix, suffix = basename(opts.infile.name).split('.', 1)
-
+    prefix, suffix = os.path.splitext(opts.infile.name) # basename(opts.infile.name).split('.', 1)
+    suffix =suffix[1:]
     if suffix not in ('fastq','fasta','fa','fq','fst', 'fna', 'faa'):
-        raise Exception("Encountered file {} in rule counts which doesn't end "
-                        "with fastq, fasta, fa, fq, faa, fna, fst.".format(infile.name))
+        raise Exception("Encountered file {} in rule counts with suffix {} not in "
+                        "set: (fastq, fasta, fa, fq, faa, fna, fst) ".format(opts.infile.name, suffix))
     suffix = 'fastq' if suffix in ('fastq', 'fq') else 'fasta'
 
 
     with open(opts.pattern, "r") as inh:
         substring_list = [line.rstrip('\n') for line in inh]
 
-    count = select_records_by_substring(opts.infile, suffix, substring_list, opts.outfile)
+    count_matches_found, all_strings_matched= select_records_by_substring(opts.infile, suffix, substring_list, opts.outfile)
 
-    print("{} records match between {}, {} .....  output to {}".format(
-        count, opts.pattern, opts.infile.name, opts.outfile.name))
-    return (count, opts.infile.name, opts.outfile.name)
+    print("matching {}, {} .....  output to {}".format(
+        opts.pattern, opts.infile.name, opts.outfile.name))
+    
+    print("{} substrings match {} records".format(
+        len(all_strings_matched), count_matches_found))
+
+    return count_matches_found, all_strings_matched, opts.pattern, opts.infile.name, opts.outfile.name
 
 if __name__ == '__main__':
     main()
