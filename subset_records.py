@@ -67,7 +67,8 @@ def main(argv=sys.argv):
     
     print("{} substrings match {} records".format(
         len(all_strings_matched), count_matches_found))
-
+    print(set(substring_list) - set(all_strings_matched) )
+    
     return count_matches_found, all_strings_matched, opts.pattern, opts.infile.name, opts.outfile.name
 
 if __name__ == '__main__':
