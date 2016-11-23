@@ -38,7 +38,8 @@ def parse_args(argv):
                         type=argparse.FileType('w'), default=sys.stdout)
     
     parser.add_argument('--pattern',
-                        default=sys.stdin , help='supports substrings but not regex')
+                        default=sys.stdin, type=argparse.FileType('r'),
+                        help='supports substrings but not regex')
     parser.add_argument('--file_format', choices=["tab","fasta","fastq"],
                         default='fasta' , help='tab or fast[aq]')
     parser.add_argument('--test', action='store_true')
