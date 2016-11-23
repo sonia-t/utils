@@ -27,6 +27,18 @@ def select_records_by_substring(inh, suffix, substring_list, outh):
             all_strings_matched |=  set(strings_matched)
     return (count_matches_found, all_strings_matched)
 
+def select_records_by_exact(inh, suffix, string_list, outh):
+    ''' probably reinventing the wheel :( '''
+    count_matches_found =0
+    all_strings_matched = set()
+    for record in SeqIO.parse(inh, suffix):
+        strings_matched = [x for x in string_list if x==record.description]
+        if any(strings_matched):
+            SeqIO.write(record, outh, suffix)
+            count_matches_found += 1
+            all_strings_matched |=  set(strings_matched)
+    return (count_matches_found, all_strings_matched)
+
 def parse_args(argv):
     parser = argparse.ArgumentParser(usage=__doc__,
                                      description='''
@@ -38,10 +50,11 @@ def parse_args(argv):
                         type=argparse.FileType('w'), default=sys.stdout)
     
     parser.add_argument('--pattern',
-                        default=sys.stdin, type=argparse.FileType('r'),
+                        default=sys.stdin,
                         help='supports substrings but not regex')
     parser.add_argument('--file_format', choices=["tab","fasta","fastq"],
                         default='fasta' , help='tab or fast[aq]')
+    parser.add_argument('--exact', action='store_true')
     parser.add_argument('--test', action='store_true')
     return parser.parse_args(argv)
 
@@ -61,7 +74,8 @@ def main(argv=sys.argv):
     with open(opts.pattern, "r") as inh:
         substring_list = [line.rstrip('\n') for line in inh]
 
-    count_matches_found, all_strings_matched= select_records_by_substring(opts.infile, suffix, substring_list, opts.outfile)
+    select_records = select_records_by_exact if opts.exact else select_records_by_substring
+    count_matches_found, all_strings_matched= select_records(opts.infile, suffix, substring_list, opts.outfile)
 
     print("matching {}, {} .....  output to {}".format(
         opts.pattern, opts.infile.name, opts.outfile.name))
