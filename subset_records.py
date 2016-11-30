@@ -80,9 +80,9 @@ def main(argv=sys.argv):
     print("matching {}, {} .....  output to {}".format(
         opts.pattern, opts.infile.name, opts.outfile.name))
     
-    print("{} substrings match {} records".format(
-        len(all_strings_matched), count_matches_found))
-    print(set(substring_list) - set(all_strings_matched) )
+    print("searched for {} substrings \n{} substrings match {} records".format(
+        len(set(substring_list)),len(all_strings_matched), count_matches_found))
+    print( 'substrings not found: ' + ",".join(set(substring_list) - set(all_strings_matched) ))
     
     return count_matches_found, all_strings_matched, opts.pattern, opts.infile.name, opts.outfile.name
 
