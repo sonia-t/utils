@@ -1,0 +1,15 @@
+# how to get rid of those pesky ^M line delimiters
+# Usage:
+# mac2unix file1 file2 file3 file4 
+# use at your own risk ! 
+# put in your /usr/local/bin
+# chmod +x /usr/local/bin/mac2unix (might have to sudo)
+# copies a back to your /tmp 
+# find /tmp -mmin -2 to dig up orig incase of something going wrong
+
+for x
+do
+   tmp=`mktemp`
+   cp $x $tmp
+   tr '\015' '\012' < "$tmp" > "$x"
+done
